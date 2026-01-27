@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Schedule</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 2rem auto;
+      max-width: 800px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1 { font-size: 2rem; margin-bottom: 1.5em; }
+    label {
+      display: block;
+      margin-bottom: .5rem;
+      font-weight: 500;
+    }
+    input[type="text"] {
+      width: 100%;
+      max-width: 360px;
+      padding: .75rem;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0066ff;
+      box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
+    }
+    button {
+      margin-top: 1rem;
+      padding: .75rem 1.5rem;
+      font-size: 1rem;
+      background: #0066ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #0052cc; }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      min-height: 100px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .error { color: #c33; }
+    .loading { color: #666; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>Find Your Schedule</h1>
+  
+  <form id="lookupForm" aria-label="Schedule lookup">
+    <label for="nameInput">
+      Enter your name:
+    </label>
+    <input
+      type="text"
+      id="nameInput"
+      name="name"
+      placeholder="e.g. John Doe"
+      autocomplete="name"
+      required
+      aria-required="true"
+    />
+    <br/>
+    <button type="submit" id="submitBtn">Search</button>
+  </form>
+
+  <div id="result" role="region" aria-live="polite">Enter a name to see the schedule</div>
+
+  <script>
+    const form = document.getElementById("lookupForm");
+    const resultDiv = document.getElementById("result");
+    const submitBtn = document.getElementById("submitBtn");
+    const nameInput = document.getElementById("nameInput");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      resultDiv.innerHTML =
+        `<span class="loading">Loading schedule for <strong>${escapeHtml(name)}</strong>...</span>`;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Searching...";
+
+      try {
+        const res = await fetch(`http://localhost:3000/schedule?name=${encodeURIComponent(name)}`, {
+          headers: { "Accept": "text/html" }
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          if (res.status === 404) {
+            resultDiv.innerHTML =
+              `<span class="error">No schedule found for <strong>${escapeHtml(name)}</strong>.</span>`;
+          } else {
+            resultDiv.innerHTML =
+              `<span class="error">Server error: ${escapeHtml(text || res.statusText)}</span>`;
+          }
+          return;
+        }
+
+        const html = await res.text();
+        resultDiv.innerHTML = html;
+      } catch (err) {
+        console.error(err);
+        resultDiv.innerHTML =
+          `<span class="error">Could not connect to server. Is the backend running on http://localhost:3000?</span>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Search";
+      }
+    });
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    nameInput.addEventListener("input", () => {
+      if (!nameInput.value.trim()) {
+        resultDiv.textContent = "Enter a name to see the schedule";
+      }
+    });
+  </script>
+</body>
+</html>

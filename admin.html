@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload Schedule</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Upload Excel Schedule</h1>
+  <p>Select your <code>schedule.xlsx</code> file and upload it to the server.</p>
+
+  <form id="uploadForm">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" required />
+    <button type="submit">Upload</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+    const statusP = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const file = fileInput.files[0];
+      if (!file) {
+        statusP.textContent = "Please choose a file first.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file); // name must match upload.single("file")
+
+      statusP.textContent = "Uploading...";
+
+      try {
+        const res = await fetch("http://localhost:3000/admin/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          statusP.textContent = "Upload failed: " + text;
+          return;
+        }
+
+        const data = await res.json();
+        statusP.textContent = data.message || "Upload successful!";
+      } catch (err) {
+        console.error(err);
+        statusP.textContent = "Error uploading file.";
+      }
+    });
+  </script>
+</body>
+</html>
