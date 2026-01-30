@@ -166,7 +166,7 @@ app.get("/schedule", (req, res) => {
   html += `
   <hr style="margin: 32px 0;" />
   <h3>Event Details</h3>
-  <iframe src="/pdfviewer" style="width: 100%; height: 800px; border: 1px solid #ddd; border-radius: 8px;" loading="lazy"></iframe>
+  <iframe src="/pdfviewer/reference.pdf" style="width: 100%; height: 800px; border: 1px solid #ddd; border-radius: 8px;" loading="lazy"></iframe>
   </div>`;
 
   res.type("html").send(html);
