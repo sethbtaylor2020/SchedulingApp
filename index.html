@@ -4,63 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Schedule</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      margin: 2rem auto;
-      max-width: 800px;
-      line-height: 1.6;
-      color: #333;
-    }
-    h1 { font-size: 2rem; margin-bottom: 1.5em; }
-    label {
-      display: block;
-      margin-bottom: .5rem;
-      font-weight: 500;
-    }
-    input[type="text"] {
-      width: 100%;
-      max-width: 360px;
-      padding: .75rem;
-      font-size: 1rem;
-      border: 2px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-    input:focus {
-      outline: none;
-      border-color: #0066ff;
-      box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
-    }
-    button {
-      margin-top: 1rem;
-      padding: .75rem 1.5rem;
-      font-size: 1rem;
-      background: #0066ff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover { background: #0052cc; }
-    button:disabled {
-      background: #aaa;
-      cursor: not-allowed;
-    }
-    #result {
-      margin-top: 2rem;
-      padding: 1.5rem;
-      min-height: 100px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      background: #fafafa;
-    }
-    .error { color: #c33; }
-    .loading { color: #666; font-style: italic; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Find Your Schedule</h1>
+  <h1">Find Your Schedule</h1>
   
   <form id="lookupForm" aria-label="Schedule lookup">
     <label for="nameInput">
@@ -70,7 +17,7 @@
       type="text"
       id="nameInput"
       name="name"
-      placeholder="e.g. John Doe"
+      placeholder="e.g. Jane Doe"
       autocomplete="name"
       required
       aria-required="true"
@@ -81,7 +28,35 @@
 
   <div id="result" role="region" aria-live="polite">Enter a name to see the schedule</div>
 
+  <div style="margin-top: 2rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Reference Document</h2>
+    <iframe src="/uploads/reference.pdf" width="100%" height="600px" style="border: 1px solid #ccc; border-radius: 8px;">
+      <p>Your browser does not support PDFs. You can <a href="/uploads/reference.pdf">download the PDF</a> instead.</p>
+    </iframe>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+
   <script>
+    // --- PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE ---
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDMoh2sYVLoNTdndV81D4DqTWuIuQWtZwM",
+  authDomain: "schedulingapp-537b1.firebaseapp.com",
+  projectId: "schedulingapp-537b1",
+  storageBucket: "schedulingapp-537b1.firebasestorage.app",
+  messagingSenderId: "989257499886",
+  appId: "1:989257499886:web:041546853383ddc01d9fff",
+  measurementId: "G-N08KHEDVP5"
+};
+    // ----------------------------------------------------
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     const form = document.getElementById("lookupForm");
     const resultDiv = document.getElementById("result");
     const submitBtn = document.getElementById("submitBtn");
@@ -93,34 +68,52 @@
       const name = nameInput.value.trim();
       if (!name) return;
 
-      resultDiv.innerHTML =
-        `<span class="loading">Loading schedule for <strong>${escapeHtml(name)}</strong>...</span>`;
+      resultDiv.innerHTML = `<span class="loading">Loading schedule for <strong>${escapeHtml(name)}</strong>...</span>`;
       submitBtn.disabled = true;
       submitBtn.textContent = "Searching...";
 
       try {
-        const res = await fetch(`http://localhost:3000/schedule?name=${encodeURIComponent(name)}`, {
-          headers: { "Accept": "text/html" }
-        });
+        const querySnapshot = await db.collection("schedules")
+          .where("Name", "==", name)
+          .get();
 
-        if (!res.ok) {
-          const text = await res.text();
-          if (res.status === 404) {
-            resultDiv.innerHTML =
-              `<span class="error">No schedule found for <strong>${escapeHtml(name)}</strong>.</span>`;
-          } else {
-            resultDiv.innerHTML =
-              `<span class="error">Server error: ${escapeHtml(text || res.statusText)}</span>`;
-          }
-          return;
+        if (querySnapshot.empty) {
+          resultDiv.innerHTML = `<span class="error">No schedule found for <strong>${escapeHtml(name)}</strong>.</span>`;
+        } else {
+          let html = '';
+          // Group by Day
+          const days = {};
+          querySnapshot.forEach(doc => {
+              const row = doc.data();
+              const day = row.Day || "Unknown";
+              if (!days[day]) days[day] = [];
+              days[day].push(row);
+          });
+          
+          const dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+          const sortedDays = Object.keys(days).sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+
+          sortedDays.forEach(day => {
+            html += `<h3 style="color: #0066ff; margin: 32px 0 8px;">${escapeHtml(day)}</h3>`;
+            html += `<table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; width: 100%; background: #fff;">
+              <tr><th>Time</th><th>Activity</th><th>Description</th><th>Location</th></tr>`;
+        
+            days[day].forEach(row => {
+              html += `<tr>
+                <td><strong>${escapeHtml(row.Time || "")}</strong></td>
+                <td>${escapeHtml(row.Activity || "")}</td>
+                <td>${escapeHtml(row.Description || "")}</td>
+                <td>${escapeHtml(row.Location || "")}</td>
+              </tr>`;
+            });
+        
+            html += '</table>';
+          });
+          resultDiv.innerHTML = html;
         }
-
-        const html = await res.text();
-        resultDiv.innerHTML = html;
       } catch (err) {
-        console.error(err);
-        resultDiv.innerHTML =
-          `<span class="error">Could not connect to server. Is the backend running on http://localhost:3000?</span>`;
+        console.error("Error fetching from Firestore:", err);
+        resultDiv.innerHTML = `<span class="error">Error connecting to the database. Check the console for details and make sure your Firebase config is correct.</span>`;
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "Search";

@@ -17,13 +17,15 @@ const PORT = 3000;
    MIDDLEWARE
 ========================= */
 app.use(cors());
+app.use(express.static(__dirname)); // Serve static files from the root directory (e.g., index.html, style.css)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve files from the /uploads directory
+
 
 /* =========================
    PATHS
 ========================= */
 const uploadDir = path.join(__dirname, "uploads");
 const excelPath = path.join(uploadDir, "schedule.xlsx");
-const pdfPath = path.join(uploadDir, "reference.pdf");
 
 // Ensure uploads folder exists
 if (!fs.existsSync(uploadDir)) {
@@ -65,24 +67,6 @@ function loadSchedule() {
 
 // Load schedule on startup
 loadSchedule();
-// Serve the main lookup page (index.html)
-app.get("/", (req, res) => {
-  const indexPath = path.join(__dirname, "index.html");
-  if (!fs.existsSync(indexPath)) {
-    return res.status(500).send(`<h2>index.html not found</h2><p>Place your index.html in the project root.</p>`);
-  }
-  res.sendFile(indexPath);
-});
-
-// Serve reference.pdf inline
-app.get("/reference.pdf", (req, res) => {
-  if (!fs.existsSync(pdfPath)) {
-    return res.status(404).send("reference.pdf not found in ./uploads/");
-  }
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", 'inline; filename="reference.pdf"');
-  res.sendFile(pdfPath);
-});
 
 // PDF viewer page (iframe target)
 app.get("/pdfviewer", (req, res) => {
@@ -98,7 +82,7 @@ app.get("/pdfviewer", (req, res) => {
   </style>
 </head>
 <body>
-  <embed src="/reference.pdf#view=FitH&toolbar=1&navpanes=0&scrollbar=1" type="application/pdf">
+  <embed src="/uploads/reference.pdf#view=FitH&toolbar=1&navpanes=0&scrollbar=1" type="application/pdf">
 </body>
 </html>
   `);

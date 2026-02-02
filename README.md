@@ -1,41 +1,29 @@
-# SchedulingApp (Update)
+# SchedulingApp (Live)
 
-Web app that references a microsoft excel sheet for people schedule. They type in their name and it brings up their work schedule.
+Web app that references a Firestore database for people's schedules. They type in their name and it brings up their work schedule.
 
-## Instructions for Build and Use
+The live, deployed version can be accessed at:
+**[https://schedulingapp-537b1.web.app](https://schedulingapp-537b1.web.app)**
 
-Steps to build and/or run the software:
+## Instructions for Use
 
-1. Open the terminal
-2. Run node server.js
-3. 
-
-Instructions for using the software:
-
-1. Reference the excel sheet for name testing
-2. Enter the selected name
-3. Read schedule
+1.  Visit the link above.
+2.  Enter a name from the schedule.
+3.  Read the resulting schedule.
+4.  When there is html or css changes you have to run "firebase deploy --only hosting" for the changes to be made.
 
 ## Development Environment
 
 To recreate the development environment, you need the following software and/or libraries with the specified versions:
 
-* VS code
-* Node.js v22.17.0.
-* Microsoft Excel
-
-## Useful Websites to Learn More
-
-I found these websites useful in developing this software:
-
-* https://www.youtube.com/watch?v=q-xS25lsN3I
-*
-*
+*   VS Code
+*   A Google account with Firebase enabled.
+*   Node.js (for using the Firebase command-line tools)
 
 ## Future Work
 
 The following items I plan to fix, improve, and/or add to this project in the future:
 
-* [ ] Fix PDF reference
-* [ ] Stylize with css
-* [ ]
+*   [x] Fix PDF reference
+*   [ ] Stylize with css
+*   [ ]
