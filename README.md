@@ -10,7 +10,7 @@ The live, deployed version can be accessed at:
 1.  Visit the link above.
 2.  Enter a name from the schedule.
 3.  Read the resulting schedule.
-4.  When there is html or css changes you have to run "firebase deploy --only hosting" for the changes to be made.
+4.  When there is html or css changes you have to run "firebase deploy --only hosting" for the changes to be made. :)
 
 ## Development Environment
 
